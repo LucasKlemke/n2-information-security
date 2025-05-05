@@ -1,4 +1,4 @@
-export function sanitizeSQLValue(value) {
+function sanitizeSQLValue(value) {
     if (typeof value !== 'string') {
         return value;
     }
@@ -11,4 +11,6 @@ export function sanitizeSQLValue(value) {
     }
     return sanitized;
 }
+
+module.exports = sanitizeSQLValue
 

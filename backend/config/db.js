@@ -3,7 +3,8 @@ const mysql = require('mysql2');
 const connection = mysql.createConnection({
   host: 'localhost',
   user: 'root',
-  password: 'jpdx1906', //utuiliza sua senha do mysql, essa é a minha, só alterar dai
+  port: 3307, // mude para sua porta
+  password: '1234', //mude para a sua 
   database: 'users_db'
 });
 

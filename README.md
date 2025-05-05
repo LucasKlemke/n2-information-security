@@ -57,6 +57,17 @@ Instale as dependências com o npm:
 npm install
 ```
 
+### Colocando a JWT key
+
+Crie o arquivo .env na raiz do projeto
+
+```bash
+JWT_SECRET=sua_chave_secreta
+```
+obs: gere a chave no git bash com o comando
+
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+
 ### Configurando o Banco de Dados
 
 1. **Criar o Banco de Dados:**
@@ -77,7 +88,8 @@ npm install
    CREATE TABLE users (
      id INT AUTO_INCREMENT PRIMARY KEY,
      name VARCHAR(255) NOT NULL,
-     email VARCHAR(255) NOT NULL UNIQUE
+     email VARCHAR(255) NOT NULL UNIQUE,
+     password VARCHAR(255) NOT NULL
    );
    ```
 

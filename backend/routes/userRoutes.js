@@ -1,15 +1,16 @@
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
+const verifyToken = require('../../middleware');
 
-router.post('/', userController.createUser);
+// Autenticação
+router.post('/register', userController.createUser);
+router.post('/login', userController.login);
 
-router.get('/', userController.getAllUsers);
-
-router.get('/:id', userController.getUserById);
-
-router.put('/:id', userController.updateUser);
-
-router.delete('/:id', userController.deleteUser);
+// CRUD com autenticação
+router.get('/', verifyToken, userController.getAllUsers);
+router.get('/:id', verifyToken, userController.getUserById);
+router.put('/:id', verifyToken, userController.updateUser);
+router.delete('/:id', verifyToken, userController.deleteUser);
 
 module.exports = router;

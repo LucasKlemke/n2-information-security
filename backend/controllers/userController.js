@@ -1,80 +1,75 @@
 const connection = require('../config/db');
-const { sanitizeSQLValue } = require('../utils');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const sanitize = require('../utils');
+require('dotenv').config();
 
-exports.createUser = (req, res) => {
-  const { name, email } = req.body;
-  const query = 'INSERT INTO users (name, email) VALUES (?, ?)';
-  const sanitizedName = sanitizeSQLValue(name);
-  const sanitizedEmail = sanitizeSQLValue(email);
 
-  connection.query(query, [sanitizedName, sanitizedEmail], (err, result) => {
-    if (err) {
-      console.error('Erro ao inserir usuário:', err);
-      return res.status(500).send('Erro ao criar usuário');
-    }
-    res.status(201).json({ id: result.insertId, name, email });
+exports.createUser = async (req, res) => {
+  const { name, email, password } = req.body; 
+  try {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const query = 'INSERT INTO users (name, email, password) VALUES (?, ?, ?)';
+    connection.query(
+      query,
+      [sanitize(name), sanitize(email), hashedPassword],
+      (err, result) => {
+        if (err) return res.status(500).json({ error: 'Erro ao registrar' });
+        res.status(201).json({ id: result.insertId, name, email });
+      }
+    );
+  } catch {
+    res.status(500).json({ error: 'Erro interno' });
+  }
+};
+
+exports.login = (req, res) => {
+  const { email, password } = req.body;
+  const query = 'SELECT * FROM users WHERE email = ?';
+
+  connection.query(query, [sanitize(email)], async (err, results) => {
+    if (err || results.length === 0) return res.status(401).json({ error: 'Credenciais inválidas' });
+
+    const user = results[0];
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) return res.status(401).json({ error: 'Credenciais inválidas' });
+
+    const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    res.json({ token });
   });
 };
 
 exports.getAllUsers = (req, res) => {
-  const query = 'SELECT * FROM users';
-  
-  connection.query(query, (err, results) => {
-    if (err) {
-      console.error('Erro ao obter usuários:', err);
-      return res.status(500).send('Erro ao buscar usuários');
-    }
+  connection.query('SELECT id, name, email FROM users', (err, results) => {
+    if (err) return res.status(500).send('Erro ao buscar usuários');
     res.status(200).json(results);
   });
 };
 
 exports.getUserById = (req, res) => {
-  const query = 'SELECT * FROM users WHERE id = ?';
-  const sanitizedId = sanitizeSQLValue(req.params.id);
-  
-  connection.query(query, [sanitizedId], (err, results) => {
-    if (err) {
-      console.error('Erro ao buscar usuário:', err);
-      return res.status(500).send('Erro ao buscar usuário');
-    }
-    if (results.length === 0) {
-      return res.status(404).send('Usuário não encontrado');
-    }
+  const query = 'SELECT id, name, email FROM users WHERE id = ?';
+  connection.query(query, [sanitize(req.params.id)], (err, results) => {
+    if (err) return res.status(500).send('Erro ao buscar usuário');
+    if (results.length === 0) return res.status(404).send('Usuário não encontrado');
     res.status(200).json(results[0]);
   });
 };
 
 exports.updateUser = (req, res) => {
   const { name, email } = req.body;
-  const sanitizedName = sanitizeSQLValue(name);
-  const sanitizedEmail = sanitizeSQLValue(email);
-  const sanitizedId = sanitizeSQLValue(req.params.id);
   const query = 'UPDATE users SET name = ?, email = ? WHERE id = ?';
-  
-  connection.query(query, [sanitizedName, sanitizedEmail, sanitizedId], (err, result) => {
-    if (err) {
-      console.error('Erro ao atualizar usuário:', err);
-      return res.status(500).send('Erro ao atualizar usuário');
-    }
-    if (result.affectedRows === 0) {
-      return res.status(404).send('Usuário não encontrado');
-    }
+  connection.query(query, [sanitize(name), sanitize(email), sanitize(req.params.id)], (err, result) => {
+    if (err) return res.status(500).send('Erro ao atualizar');
+    if (result.affectedRows === 0) return res.status(404).send('Usuário não encontrado');
     res.status(200).json({ id: req.params.id, name, email });
   });
 };
 
 exports.deleteUser = (req, res) => {
   const query = 'DELETE FROM users WHERE id = ?';
-  const sanitizedId = sanitizeSQLValue(req.params.id);
-  
-  connection.query(query, [sanitizedId], (err, result) => {
-    if (err) {
-      console.error('Erro ao deletar usuário:', err);
-      return res.status(500).send('Erro ao deletar usuário');
-    }
-    if (result.affectedRows === 0) {
-      return res.status(404).send('Usuário não encontrado');
-    }
+  connection.query(query, [sanitize(req.params.id)], (err, result) => {
+    if (err) return res.status(500).send('Erro ao deletar');
+    if (result.affectedRows === 0) return res.status(404).send('Usuário não encontrado');
     res.status(204).send();
   });
 };
