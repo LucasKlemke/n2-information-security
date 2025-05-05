@@ -18,8 +18,9 @@ exports.createUser = async (req, res) => {
         res.status(201).json({ id: result.insertId, name, email });
       }
     );
-  } catch {
-    res.status(500).json({ error: 'Erro interno' });
+  } catch (err) {
+    console.error('Erro ao registrar usuário:', err.message);
+    res.status(400).json({ error: err.message });
   }
 };
 
