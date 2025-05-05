@@ -1,4 +1,4 @@
-# API de Gestão de Usuários - N2 - Segurança da Informação
+# API de Gestão de Usuários - N2 - Segurança da Informação (V.2.0)
 
 Esta API foi desenvolvida como parte do projeto N2 de Segurança da Informação e tem como objetivo gerenciar operações CRUD (Criar, Ler, Atualizar, Excluir) para usuários, utilizando **Node.js**, **Express** e **MySQL**.
 
